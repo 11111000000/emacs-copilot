@@ -19,6 +19,10 @@
 (require 'request-deferred)
 (require 'magit)
 
+(defcustom emacs-copilot-openapi-url "https://api.openai.com"
+  "Your OpenAI API key."
+  :type 'string
+  :group 'emacs-copilot)
 
 (defcustom emacs-copilot-api-key ""
   "Your OpenAI API key."
@@ -47,13 +51,13 @@
   (cl-case provider
     (openai
      (let ((headers `(("Content-Type" . "application/json")
-                      ("Authorization" . ,(concat "Bearer " emacs-copilot-openai-api-key))))
-           (data (json-encode `(("model" . "gpt-3.5-turbo-instruct")
-                                ("prompt" . ,instruction)
-                                ("max_tokens" . 2000)
-                                ("n" . 1)
-                                ("temperature" . 0.3)))))
-       (request-deferred "https://api.openai.com/v1/completions"
+                     ("Authorization" . ,(concat "Bearer " emacs-copilot-openai-api-key))))
+          (data (json-encode `(("model" . "gpt-4-turbo-instruct")
+                               ("prompt" . ,instruction)
+                               ("max_tokens" . 2000)
+                               ("n" . 1)
+                               ("temperature" . 0.3)))))
+       (request-deferred (contact emacs-copilot-openapi-url "/v1/completions")
                          :type "POST"
                          :headers headers
                          :data data
@@ -61,16 +65,16 @@
                          :success (cl-function
                                    (lambda (&key data &allow-other-keys)
                                      (let* ((choices (cdr (assoc 'choices data)))
-                                            (choice (elt choices 0))
-                                            (text (cdr (assoc 'text choice))))
+                                           (choice (elt choices 0))
+                                           (text (cdr (assoc 'text choice))))
                                        (funcall callback text))))
                          :error (cl-function
                                  (lambda (&key error-thrown &allow-other-keys)
                                    (message "Error: %S" error-thrown))))))
     (google-gemini
      (let ((headers `(("Content-Type" . "application/json")
-                      ))
-           (data (json-encode `(("contents" . [((("parts" . [((("text" . ,instruction)))])))])))))
+                     ))
+          (data (json-encode `(("contents" . [((("parts" . [((("text" . ,instruction)))])))])))))
        ;;
        (request-deferred (concat "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" emacs-copilot-google-gemini-api-key)
                          :type "POST"
@@ -80,11 +84,11 @@
                          :success (cl-function
                                    (lambda (&key data &allow-other-keys)
                                      (let* ((candidates (cdr (assoc 'candidates data)))
-                                            (candidate (elt candidates 0))
-                                            (content (cdr (assoc 'content candidate)))
-                                            (parts (cdr (assoc 'parts content)))
-                                            (part (elt parts 0))
-                                            (text (cdr (assoc 'text part))))
+                                           (candidate (elt candidates 0))
+                                           (content (cdr (assoc 'content candidate)))
+                                           (parts (cdr (assoc 'parts content)))
+                                           (part (elt parts 0))
+                                           (text (cdr (assoc 'text part))))
                                        (funcall callback text))))
                          :error (cl-function
                                  (lambda (&key error-thrown &allow-other-keys)
