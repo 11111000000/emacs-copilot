@@ -52,7 +52,7 @@
     (openai
      (let ((headers `(("Content-Type" . "application/json")
                      ("Authorization" . ,(concat "Bearer " emacs-copilot-openai-api-key))))
-          (data (json-encode `(("model" . "gpt-4-turbo-instruct")
+          (data (json-encode `(("model" . "gpt-4-turbo")
                                ("prompt" . ,instruction)
                                ("max_tokens" . 2000)
                                ("n" . 1)
